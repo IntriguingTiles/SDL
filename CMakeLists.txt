@@ -229,7 +229,7 @@ if(APPLE OR ARCH_64 OR MSVC_CLANG)
     set(OPT_DEF_SSEMATH ON)
   endif()
 endif()
-if(UNIX OR MINGW OR MSYS OR (USE_CLANG AND NOT WINDOWS) OR VITA OR PSP)
+if(UNIX OR MINGW OR MSYS OR (USE_CLANG AND NOT WINDOWS) OR VITA OR PSP OR WIIU)
   set(OPT_DEF_LIBC ON)
 endif()
 
@@ -283,15 +283,6 @@ if(WINDOWS)
   set(CMAKE_SHARED_LIBRARY_PREFIX "")
 endif()
 
-if(WUT)
-  # Use wut cflags and remove debug symbols
-  set(CMAKE_C_FLAGS "${WUT_C_FLAGS} ${CMAKE_C_FLAGS}")
-  string(REPLACE "-g" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
-
-  #Link against needed libraries
-  set(SDL_LIBS "${SDL_LIBS} ${WUT_STANDARD_LIBRARIES}")
-endif()
-
 # Emscripten toolchain has a nonempty default value for this, and the checks
 # in this file need to change that, so remember the original value, and
 # restore back to that afterwards. For check_function_exists() to work in
@@ -342,7 +333,7 @@ if(EMSCRIPTEN)
   set(SDL_CPUINFO_ENABLED_BY_DEFAULT OFF)
 endif()
 
-if(VITA OR PSP)
+if(VITA OR PSP OR WIIU)
   set(SDL_SHARED_ENABLED_BY_DEFAULT OFF)
   set(SDL_LOADSO_ENABLED_BY_DEFAULT OFF)
 endif()
@@ -752,7 +743,7 @@ if(SDL_ASSEMBLY)
 
     check_include_file("immintrin.h" HAVE_IMMINTRIN_H)
 
-    if(SDL_ALTIVEC)
+    if(SDL_ALTIVEC AND NOT WIIU)
       set(CMAKE_REQUIRED_FLAGS "-maltivec")
       check_c_source_compiles("
           #include <altivec.h>
@@ -2549,6 +2540,47 @@ elseif(OS2)
   if(SDL_HIDAPI)
     CheckHIDAPI()
   endif()
+
+elseif(WIIU)
+  if(SDL_AUDIO)
+    set(SDL_AUDIO_DRIVER_WIIU 1)
+    file(GLOB WIIU_AUDIO_SOURCES ${SDL2_SOURCE_DIR}/src/audio/wiiu/*.c)
+    set(SOURCE_FILES ${SOURCE_FILES} ${WIIU_AUDIO_SOURCES})
+    set(HAVE_SDL_AUDIO TRUE)
+  endif()
+
+  if(SDL_JOYSTICK)
+    set(SDL_JOYSTICK_WIIU 1)
+    file(GLOB WIIU_JOYSTICK_SOURCES ${SDL2_SOURCE_DIR}/src/joystick/wiiu/*.c)
+    set(SOURCE_FILES ${SOURCE_FILES} ${WIIU_JOYSTICK_SOURCES})
+    set(HAVE_SDL_JOYSTICK TRUE)
+  endif()
+
+  if(SDL_THREADS)
+    set(SDL_THREAD_WIIU 1)
+    file(GLOB WIIU_THREAD_SOURCES ${SDL2_SOURCE_DIR}/src/thread/generic/SDL_systls.c ${SDL2_SOURCE_DIR}/src/thread/wiiu/*.c)
+    set(SOURCE_FILES ${SOURCE_FILES} ${WIIU_THREAD_SOURCES})
+    set(HAVE_SDL_THREADS TRUE)
+  endif()
+
+  if(SDL_TIMERS)
+    set(SDL_TIMER_WIIU 1)
+    file(GLOB WIIU_TIMER_SOURCES ${SDL2_SOURCE_DIR}/src/timer/wiiu/*.c)
+    set(SOURCE_FILES ${SOURCE_FILES} ${WIIU_TIMER_SOURCES})
+    set(HAVE_SDL_TIMERS TRUE)
+  endif()
+
+  if(SDL_VIDEO)
+    set(SDL_VIDEO_DRIVER_WIIU 1)
+    set(SDL_VIDEO_RENDER_WIIU 1)
+    file(GLOB WIIU_VIDEO_SOURCES ${SDL2_SOURCE_DIR}/src/video/wiiu/*.c)
+    set(SOURCE_FILES ${SOURCE_FILES} ${WIIU_VIDEO_SOURCES})
+    set(HAVE_SDL_VIDEO TRUE)
+  endif()
+
+  list(APPEND EXTRA_LIBS
+      wut
+    )
 endif()
 
 if(HAVE_VULKAN AND NOT SDL_LOADSO)
