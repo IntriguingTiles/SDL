@@ -563,6 +563,8 @@ SDL_GetPlatform(void)
     return "PlayStation Portable";
 #elif __VITA__
     return "PlayStation Vita";
+#elif __WIIU__
+    return "Wii U";
 #else
     return "Unknown (see SDL_platform.h)";
 #endif

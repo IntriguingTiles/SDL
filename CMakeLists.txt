@@ -283,6 +283,15 @@ if(WINDOWS)
   set(CMAKE_SHARED_LIBRARY_PREFIX "")
 endif()
 
+if(WUT)
+  # Use wut cflags and remove debug symbols
+  set(CMAKE_C_FLAGS "${WUT_C_FLAGS} ${CMAKE_C_FLAGS}")
+  string(REPLACE "-g" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+
+  #Link against needed libraries
+  set(SDL_LIBS "${SDL_LIBS} ${WUT_STANDARD_LIBRARIES}")
+endif()
+
 # Emscripten toolchain has a nonempty default value for this, and the checks
 # in this file need to change that, so remember the original value, and
 # restore back to that afterwards. For check_function_exists() to work in
